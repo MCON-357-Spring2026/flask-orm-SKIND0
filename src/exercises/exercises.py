@@ -6,6 +6,7 @@ Implement the TODO functions. Autograder will test them.
 from __future__ import annotations
 
 from typing import Optional
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 
@@ -22,12 +23,24 @@ def create_student(name: str, email: str) -> Student:
       - rollback
       - raise ValueError("duplicate email")
     """
-    raise NotImplementedError
+    student = Student(name=name, email=email)
+
+    try:
+        db.session.add(student)
+        db.session.commit()
+        return student
+
+    except IntegrityError:
+        db.session.rollback()
+        raise ValueError("duplicate email")
+
 
 
 def find_student_by_email(email: str) -> Optional[Student]:
     """TODO: Return Student by email or None."""
-    raise NotImplementedError
+    if not email:
+        return None
+    return Student.query.filter_by(email=email).first()
 
 
 def add_grade(student_id: int, assignment_id: int, score: int) -> Grade:
@@ -37,7 +50,12 @@ def add_grade(student_id: int, assignment_id: int, score: int) -> Grade:
     If assignment doesn't exist: raise LookupError
     If duplicate grade: raise ValueError("duplicate grade")
     """
-    raise NotImplementedError
+    grade = Grade(student_id=student_id, assignment_id=assignment_id, score=score)
+
+    if student_id not in db.session:
+        raise LookupError("student does not exist")
+    elif assignment_id not in db.session:
+        raise LookupError("assignment does not exist")
 
 
 def average_percent(student_id: int) -> float:
